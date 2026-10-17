@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITE-066 // THE COMPLETE HORROR ARCHIVE</title>
+    
+    <!-- Tailwind CSS & Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Share+Tech+Mono&family=Sarabun:wght@300;400;700&family=Noto+Sans+Thai:wght@300;400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --term-red: #ff1100;
+            --term-green: #33ff33;
+            --term-amber: #ffb700;
+            --room-bg: #080b09;
+            --room-panel: rgba(13, 20, 16, .94);
+            --room-green: #78d6a0;
+            --room-dim: #92a69a;
+            --room-text: #e2e9e3;
+            --room-red: #c66f70;
+            --room-line: rgba(120, 214, 160, .22);
+        }
+
+        body {
+            background-color: #020202;
+            color: #d1d5db;
+            font-family: 'VT323', 'Sarabun', 'Noto Sans Thai', monospace;
+            overflow-x: hidden;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .chapter-container {
+            display: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .chapter-container.active {
+            display: block;
+        }
+
+        .next-chapter-btn {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 14px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            font-family: inherit;
+        }
+
+        /* CRT Scanline Effects */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            z-index: 40;
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .scanline {
+            width: 100%;
+            height: 120px;
+            z-index: 41;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.15;
+            position: absolute;
+            top: 0;
+            pointer-events: none;
+            animation: scanline 7s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-120px); }
+            100% { transform: translateY(100vh + 120px); }
+        }
+
+        .glitch-text {
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff; }
+            50% { text-shadow: 2px -1px #ff0000, -2px 1px #0000ff; }
+            100% { text-shadow: 1px -1px #ff0000, -1px 1px #00ffff; }
+        }
+
+        .severe-shake { animation: shake 0.15s infinite; }
+        @keyframes shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            50% { transform: translate(-1px, 3px) rotate(1deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .creepy-font { font-family: 'Creepster', cursive; }
+        .mono-font { font-family: 'Share Tech Mono', monospace; }
+
+        /* Chapter 2 Specific Styles */
+        #chapter2 {
+            background: radial-gradient(ellipse at 50% 0%, rgba(39, 77, 53, .2), transparent 50%), linear-gradient(180deg, #0a100c, var(--room-bg) 60%);
+            color: var(--room-text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            padding: 20px;
+        }
+        .ch2-wrap { width: min(900px, 92vw); margin: 0 auto; padding-bottom: 40px; }
+        .ch2-panel { background: var(--room-panel); border: 1px solid var(--room-line); border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .ch2-btn, .ch2-input { font: inherit; border-radius: 7px; border: 1px solid var(--room-line); padding: 10px 14px; color: var(--room-text); background: #101a13; cursor: pointer; }
+        .ch2-btn.primary { background: #163524; border-color: #4c9d6a; }
+        .ch2-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .hidden { display: none !important; }
+
+        /* Chapter 3 Specific Styles */
+        #chapter3 {
+            background: #0a0a0a;
+            color: #777;
+            font-family: 'Noto Sans Thai', sans-serif;
+            text-align: center;
+            padding: 60px 20px;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================
+       CHAPTER 1: SITE-066 CONTAINMENT TERMINAL
+       ========================================== -->
+    <div id="chapter1" class="chapter-container active crt bg-black relative p-2 md:p-4 text-gray-300">
+        <canvas id="noiseCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-25"></canvas>
+        <div class="scanline"></div>
+
+        <!-- Jumpscare Modal -->
+        <div id="jumpscareOverlay" class="fixed inset-0 bg-red-950/98 z-50 flex flex-col items-center justify-center hidden pointer-events-none p-4">
+            <h1 class="text-6xl text-red-600 creepy-font text-center animate-bounce">CONTAINMENT BREACHED</h1>
+            <p class="text-white text-xl mt-4">IT IS ALREADY HERE...</p>
+        </div>
+
+        <!-- Audio Start Overlay -->
+        <div id="startScreen" class="fixed inset-0 bg-black/98 z-50 flex flex-col items-center justify-center p-6 text-center border-4 border-red-950">
+            <div class="max-w-xl space-y-4">
+                <div class="text-red-600 text-xs tracking-widest font-mono">CLASSIFIED // SITE-066</div>
+                <h1 class="text-5xl text-red-700 font-bold glitch-text">PROJECT: NIGHTMARE</h1>
+                <p class="text-gray-400 text-sm">กดปุ่มด้านล่างเพื่อเริ่มระบบเชื่อมต่อเรดาร์และสัญญาณชีพ</p>
+                <button id="startButton" class="px-6 py-3 bg-red-950 border border-red-700 text-red-400 text-xl hover:bg-red-900 hover:text-white transition">
+                    [ INITIALIZE NEURAL FEED ]
+                </button>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="relative z-20 flex justify-between items-center border-b border-red-950 pb-2 px-2">
+            <span class="text-red-600 font-bold mono-font text-sm">SITE-066 // MONITOR</span>
+            <div class="flex space-x-3 text-xs">
+                <div>SANITY: <span id="sanityText" class="text-red-500 font-bold">100%</span></div>
+                <div>PARANOIA: <span id="paranoiaText" class="text-amber-500 font-bold">0%</span></div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-4 my-2 h-[72vh]">
+            <!-- CCTV Panel -->
+            <div class="lg:col-span-5 bg-black/80 border border-red-900/50 rounded p-3 flex flex-col justify-between">
+                <div class="flex justify-between items-center border-b border-red-950 pb-1 text-xs">
+                    <span id="cctvTitle" class="text-red-500 mono-font">CAM_01: "THE EYE"</span>
+                    <span class="text-red-700 animate-pulse">● LIVE</span>
+                </div>
+                <div class="relative w-full h-52 my-2 bg-black border border-red-950 rounded flex items-center justify-center overflow-hidden">
+                    <canvas id="cctvCanvas" class="w-full h-full"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <button class="cam-btn px-2 py-1 bg-red-950/50 border border-red-800 text-red-300" data-cam="1">CAM 1: EYE</button>
+                    <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500" data-cam="2">CAM 2: DARK</button>
+                    <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500" data-cam="3">CAM 3: CORRIDOR</button>
+                    <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500" data-cam="4">CAM 4: STATIC</button>
+                </div>
+            </div>
+
+            <!-- Terminal Panel -->
+            <div class="lg:col-span-7 bg-black/90 border border-red-900/70 rounded p-3 flex flex-col justify-between">
+                <div id="terminalOutput" class="overflow-y-auto space-y-2 font-mono text-sm h-[45vh] pr-1">
+                    <p class="text-green-500">[SYSTEM]: เชื่อมต่อระบบสำเร็จ พร้อมรับคำสั่ง...</p>
+                </div>
+                <div class="border-t border-red-950 pt-2">
+                    <div id="choiceBox" class="grid grid-cols-1 sm:grid-cols-2 gap-2 hidden">
+                        <button class="choice-btn px-3 py-2 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded text-left" data-choice="0"></button>
+                        <button class="choice-btn px-3 py-2 bg-red-950/40 border border-red-800 text-red-300 text-xs rounded text-left" data-choice="1"></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <button onclick="goToChapter(2)" class="next-chapter-btn bg-red-950 border-2 border-red-600 text-red-300 hover:bg-red-900">
+            NEXT ➔ ไปยัง บทที่ 2 (Room Zero)
+        </button>
+    </div>
+
+
+    <!-- ==========================================
+       CHAPTER 2: ROOM ZERO (ห้องที่ 0)
+       ========================================== -->
+    <div id="chapter2" class="chapter-container">
+        <div class="ch2-wrap">
+            <header style="text-align: center; padding: 20px 0;">
+                <h1 style="color: #78d6a0; font-size: 2.2rem;">ห้องที่ 0 — จดหมายฉบับสุดท้าย</h1>
+                <p style="color: #92a69a;">“ถ้าคุณอ่านข้อความนี้ แปลว่าฉันยังไม่ถูกลืมเสียที”</p>
+            </header>
+
+            <section class="ch2-panel">
+                <h2>▸ บันทึกการเข้าใช้งาน</h2>
+                <div id="ch2Opening" style="white-space: pre-wrap; line-height: 1.8; color: #d5ded7;">คลิกปุ่มด้านล่างเพื่อเปิดจดหมาย...</div>
+                <button class="ch2-btn primary" id="readBtn" style="margin-top: 10px;">เปิดอ่านจดหมาย</button>
+            </section>
+
+            <section class="ch2-panel">
+                <h2>▸ สิ่งของที่เหลืออยู่</h2>
+                <div class="ch2-notes">
+                    <button class="ch2-btn ch2-note" data-note="0">บันทึก 01 (วันที่)</button>
+                    <button class="ch2-btn ch2-note" data-note="1">บันทึก 02 (เวลา)</button>
+                    <button class="ch2-btn ch2-note" data-note="2">บันทึก 03 (รหัส)</button>
+                </div>
+                <div id="noteText" style="margin-top: 15px; color: #78d6a0; min-height: 40px;"></div>
+            </section>
+
+            <section class="ch2-panel">
+                <h2>▸ ประตูเก็บเอกสาร (ใส่รหัส 4 หลัก: จากบันทึก 01, 02)</h2>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <input class="ch2-input" id="codeInput" maxlength="4" placeholder="เช่น 1704">
+                    <button class="ch2-btn primary" id="unlockBtn">ปลดล็อก</button>
+                </div>
+                <div id="codeResult" style="margin-top: 10px; color: #78d6a0;"></div>
+            </section>
+
+            <section class="ch2-panel hidden" id="ending">
+                <h2 style="color: #c66f70;">▸ เอกสารที่ถูกซ่อนไว้</h2>
+                <p>ปลดล็อกสำเร็จ! คุณค้นพบความจริงเบื้องหลังห้องนี้แล้ว</p>
+            </section>
+
+            <button onclick="goToChapter(3)" class="next-chapter-btn bg-[#163524] border-2 border-[#4c9d6a] text-[#78d6a0] hover:bg-[#1f4a33]">
+                NEXT ➔ ไปยัง บทที่ 3 (The Waiting Void)
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+       CHAPTER 3: THE WAITING VOID
+       ========================================== -->
+    <div id="chapter3" class="chapter-container">
+        <div style="max-width: 650px; margin: 0 auto; line-height: 2;">
+            <h1 style="color: #555; font-size: 2.5rem; letter-spacing: 5px;">...ยังไม่จากไป</h1>
+            <hr style="border-color: #333; margin: 30px auto; width: 100px;">
+            <p style="color: #666; font-size: 1.1rem;">
+                “บางครั้งความมืดไม่ได้น่ากลัวเท่ากับความเงียบ... มันรออยู่ตรงนั้น ในที่ที่คุณมองไม่เห็น แต่คุณรู้สึกได้”
+            </p>
+            <p style="color: #444; margin-top: 20px; font-style: italic;">
+                “อย่ากลัวฉันนะ ฉันแค่หลงทาง เหมือนกับที่คุณเคยหลงทางนั่นแหละ”
+            </p>
+            <button onclick="goToChapter(1)" class="next-chapter-btn bg-[#111] border border-[#444] text-[#888] hover:text-white" style="margin-top: 50px;">
+                ↺ วนกลับไปจุดเริ่มต้น (Chapter 1)
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+       CONTROL LOGIC SCRIPT
+       ========================================== -->
+    <script>
+        // ระบบเปลี่ยนหน้า (Chapter Switcher)
+        function goToChapter(num) {
+            document.querySelectorAll('.chapter-container').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(`chapter${num}`);
+            if (target) {
+                target.classList.add('active');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // --- CHAPTER 1 LOGIC ---
+        let sanity = 100, paranoia = 0, currentCam = 1;
+        const sanityText = document.getElementById('sanityText');
+        const paranoiaText = document.getElementById('paranoiaText');
+        const terminalOutput = document.getElementById('terminalOutput');
+        const choiceBox = document.getElementById('choiceBox');
+        const cctvCanvas = document.getElementById('cctvCanvas');
+        const cctvCtx = cctvCanvas.getContext('2d');
+        const cctvTitle = document.getElementById('cctvTitle');
+
+        // Canvas CCTV Render
+        function renderCCTV() {
+            if (!cctvCanvas.parentElement) return;
+            cctvCanvas.width = cctvCanvas.clientWidth;
+            cctvCanvas.height = cctvCanvas.clientHeight;
+            const w = cctvCanvas.width, h = cctvCanvas.height;
+            cctvCtx.fillStyle = '#000'; cctvCtx.fillRect(0, 0, w, h);
+
+            if (currentCam === 1) {
+                // ดวงตา
+                cctvCtx.beginPath(); cctvCtx.arc(w/2, h/2, 50, 0, Math.PI*2);
+                cctvCtx.fillStyle = '#111'; cctvCtx.fill(); cctvCtx.strokeStyle = '#500'; cctvCtx.stroke();
+                cctvCtx.beginPath(); cctvCtx.arc(w/2, h/2, 18, 0, Math.PI*2);
+                cctvCtx.fillStyle = '#ff0000'; cctvCtx.fill();
+            } else if (currentCam === 2) {
+                cctvCtx.fillStyle = '#222'; cctvCtx.fillText("CAM 2: DARK ROOM (NO SIGNAL)", 20, 30);
+            } else if (currentCam === 3) {
+                cctvCtx.strokeStyle = '#500';
+                cctvCtx.strokeRect(w/4, h/4, w/2, h/2);
+            } else {
+                cctvCtx.fillStyle = '#fff';
+                for(let i=0; i<200; i++) cctvCtx.fillRect(Math.random()*w, Math.random()*h, 2, 2);
+            }
+            requestAnimationFrame(renderCCTV);
+        }
+        requestAnimationFrame(renderCCTV);
+
+        // สลับกล้อง CCTV
+        document.querySelectorAll('.cam-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                currentCam = parseInt(e.target.dataset.cam);
+                cctvTitle.textContent = `CAM_0${currentCam}: ` + ["", "THE EYE", "DARK ROOM", "CORRIDOR", "STATIC"][currentCam];
+                paranoia = Math.min(100, paranoia + 5);
+                paranoiaText.textContent = paranoia + '%';
+            });
+        });
+
+        // Interactive Terminal Story
+        const storyNodes = [
+            { text: "[SYSTEM]: ตรวจพบความผิดปกติในห้องทดลอง คุณจะทำอย่างไร?", choices: ["1. ตรวจสอบเซ็นเซอร์ชีวภาพ", "2. ปิดระบบป้องกันฉุกเฉิน"] },
+            { text: "[WARNING]: สัญญาณตอบกลับจากสิ่งแปลกปลอม... มันกำลังมองมาที่คุณผ่านกล้อง", choices: ["1. รีบตัดไฟเทอร์มินัล", "2. นั่งดูมันเงียบๆ"] }
+        ];
+
+        function loadNode(idx) {
+            const node = storyNodes[idx];
+            const p = document.createElement('p'); p.className = "text-red-400"; p.textContent = node.text;
+            terminalOutput.appendChild(p);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            choiceBox.classList.remove('hidden');
+            const btns = choiceBox.querySelectorAll('.choice-btn');
+            btns.forEach((b, i) => {
+                if (node.choices[i]) { b.style.display = 'block'; b.textContent = node.choices[i]; }
+                else b.style.display = 'none';
+            });
+        }
+
+        choiceBox.addEventListener('click', (e) => {
+            if (e.target.classList.contains('choice-btn')) {
+                sanity = Math.max(0, sanity - 15);
+                sanityText.textContent = sanity + '%';
+                terminalOutput.innerHTML += `<p class="text-gray-400">> เลือกคำสั่งเรียบร้อย ค่าสติลดลง</p>`;
+                if (sanity <= 0) {
+                    document.getElementById('jumpscareOverlay').classList.remove('hidden');
+                } else {
+                    loadNode(1);
+                }
+            }
+        });
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.add('hidden');
+            loadNode(0);
+        });
+
+
+        // --- CHAPTER 2 LOGIC ---
+        document.getElementById('readBtn').addEventListener('click', () => {
+            document.getElementById('ch2Opening').textContent = "ถึงคนที่ยังจำฉันได้...\nฉันขอโทษที่ปล่อยให้ห้องนี้เงียบอยู่นาน\n(คำใบ้: วันที่ 17, เวลา 04)";
+        });
+
+        const notes = [
+            "บันทึก 01: วันที่ 17 ของเดือน",
+            "บันทึก 02: เกิดเหตุเวลา 04 นาฬิกา",
+            "บันทึก 03: รหัสผ่าน 4 หลักคือรวมตัวเลข (17 + 04 = 1704)"
+        ];
+
+        document.querySelectorAll("[data-note]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const idx = Number(btn.dataset.note);
+                document.getElementById("noteText").textContent = notes[idx];
+            });
+        });
+
+        document.getElementById("unlockBtn").addEventListener("click", () => {
+            const val = document.getElementById("codeInput").value.trim();
+            if (val === "1704") {
+                document.getElementById("ending").classList.remove("hidden");
+                document.getElementById("codeResult").textContent = "ปลดล็อกสำเร็จ! แฟ้มลับถูกเปิดออก";
+            } else {
+                document.getElementById("codeResult").textContent = "รหัสไม่ถูกต้อง (ลองดูคำใบ้จากบันทึก: 1704)";
+            }
+        });
+    </script>
+</body>
+</html>
