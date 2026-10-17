@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080b09">
+<title>ห้องที่ 0 — จดหมายฉบับสุดท้าย</title>
+<style>
+  :root {
+    --bg: #080b09;
+    --panel: rgba(13, 20, 16, .94);
+    --green: #78d6a0;
+    --dim: #92a69a;
+    --text: #e2e9e3;
+    --red: #c66f70;
+    --line: rgba(120, 214, 160, .22);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(39, 77, 53, .2), transparent 50%),
+      linear-gradient(180deg, #0a100c, var(--bg) 60%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-x: hidden;
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 10;
+    background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(0,0,0,.15) 4px);
+    opacity: .38;
+  }
+  .wrap { width: min(900px, 92vw); margin: 0 auto; padding: 28px 0 60px; }
+  .topline { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; color:var(--dim); font-size:.78rem; letter-spacing:.08em; }
+  .status { color:var(--green); }
+  header { text-align:center; padding: 54px 0 32px; }
+  .sigil { color:var(--green); font-size:2.4rem; text-shadow:0 0 20px rgba(120,214,160,.35); }
+  h1 { font-size:clamp(2rem, 7vw, 4rem); letter-spacing:.12em; margin:12px 0; font-weight:500; }
+  .subtitle { color:var(--dim); line-height:1.8; }
+  .warning { color:var(--red); font-size:.8rem; margin-top:18px; }
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:clamp(18px, 4vw, 30px); margin:18px 0; box-shadow:0 12px 50px rgba(0,0,0,.22); }
+  .panel h2 { margin-top:0; font-size:1rem; color:var(--green); font-weight:600; }
+  .story { line-height:2; white-space:pre-wrap; min-height:90px; color:#d5ded7; }
+  .muted { color:var(--dim); font-size:.88rem; line-height:1.8; }
+  .buttons { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  button, input {
+    font:inherit; border-radius:7px; border:1px solid var(--line);
+    padding:12px 14px; color:var(--text); background:#101a13;
+  }
+  button { cursor:pointer; transition:background .2s, border-color .2s; }
+  button:hover, button:focus-visible { background:#183323; border-color:var(--green); outline:none; }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .primary { background:#163524; border-color:#4c9d6a; }
+  .danger { color:#f0b7b7; }
+  .notes { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .note { min-height:100px; text-align:left; color:var(--dim); }
+  .note.unlocked { color:var(--text); border-color:var(--green); }
+  .note strong { display:block; color:var(--green); margin-bottom:8px; }
+  .locked { filter: blur(3px); user-select:none; }
+  .code-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .code-row input { flex:1; min-width:150px; }
+  .result { min-height:28px; margin-top:14px; color:var(--green); line-height:1.8; }
+  .hidden { display:none !important; }
+  .ending { border-color:rgba(198,111,112,.45); }
+  .ending h2 { color:var(--red); }
+  footer { text-align:center; color:#6f8175; font-size:.75rem; line-height:1.8; margin-top:35px; }
+  .glitch { animation: flicker 5s infinite; }
+  @keyframes flicker { 0%, 94%, 96%, 100% {opacity:1} 95% {opacity:.72} 97% {opacity:.9} }
+  @media (max-width:620px) {
+    .notes { grid-template-columns:1fr; }
+    header { padding-top:36px; }
+    .topline { font-size:.68rem; }
+    .panel { padding:18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topline">
+    <span>ARCHIVE / ROOM 00</span>
+    <span class="status" id="systemStatus">● ระบบบันทึก: ทำงาน</span>
+  </div>
+
+  <header>
+    <div class="sigil glitch">☾</div>
+    <h1>ห้องที่ 0</h1>
+    <div class="subtitle">จดหมายฉบับสุดท้าย<br>“ถ้าคุณอ่านข้อความนี้ แปลว่าฉันยังไม่ถูกลืมเสียที”</div>
+    <div class="warning">คำเตือน: เอกสารนี้มีเนื้อหาแต่งขึ้นเพื่อความบันเทิง</div>
+  </header>
+
+  <section class="panel">
+    <h2>▸ บันทึกการเข้าใช้งาน</h2>
+    <div class="story" id="opening"></div>
+    <div class="buttons">
+      <button class="primary" id="readBtn">อ่านข้อความต่อ</button>
+      <button id="lightsBtn" aria-pressed="false">สลับสัญญาณภาพ</button>
+    </div>
+    <p class="muted">ไม่มีเสียงหรือภาพกระโดดใส่ผู้ชม เอฟเฟกต์ทั้งหมดเป็นเพียงการแสดงผลบนหน้านี้</p>
+  </section>
+
+  <section class="panel">
+    <h2>▸ สิ่งของที่เหลืออยู่</h2>
+    <p class="muted">เปิดบันทึกทั้งสามฉบับให้ครบ คำใบ้แต่ละฉบับจะช่วยถอดรหัสประตู</p>
+    <div class="notes">
+      <button class="note" data-note="0"><strong>บันทึก 01</strong>กระดาษเปียกฝน</button>
+      <button class="note" data-note="1"><strong>บันทึก 02</strong>เทปที่ไม่มีเสียง</button>
+      <button class="note" data-note="2"><strong>บันทึก 03</strong>ภาพถ่ายที่หันกลับ</button>
+    </div>
+    <div class="story" id="noteText" aria-live="polite"></div>
+  </section>
+
+  <section class="panel">
+    <h2>▸ ประตูเก็บเอกสาร</h2>
+    <p class="muted">บันทึกฉบับแรกกล่าวถึงวันที่ บันทึกที่สองพูดถึงเวลา ส่วนภาพถ่ายมีตัวเลขที่ถูกวงไว้</p>
+    <div class="code-row">
+      <input id="codeInput" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="ใส่รหัส 4 หลัก" aria-label="รหัสลับ 4 หลัก">
+      <button class="primary" id="unlockBtn">ปลดล็อก</button>
+    </div>
+    <div class="result" id="codeResult" aria-live="polite"></div>
+  </section>
+
+  <section class="panel ending hidden" id="ending">
+    <h2>▸ เอกสารที่ถูกซ่อนไว้</h2>
+    <div class="story" id="endingText"></div>
+    <div class="buttons"><button id="finalBtn">อ่านบรรทัดสุดท้าย</button></div>
+    <div class="story hidden" id="finalText"></div>
+  </section>
+
+  <footer>
+    FICTIONAL ARCHIVE • ROOM 00<br>
+    ความคืบหน้าถูกเก็บไว้ในหน่วยความจำของหน้านี้เท่านั้น ไม่มีการส่งข้อมูลออกจากอุปกรณ์
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const openingLines = [
+    "กำลังตรวจสอบเอกสาร...",
+    "พบแฟ้มที่ไม่มีหมายเลขผู้ส่ง",
+    "วันที่บนซองจดหมาย: 17 ตุลาคม",
+    "",
+    "ถึงคนที่ยังจำฉันได้",
+    "ฉันขอโทษที่ปล่อยให้ห้องนี้เงียบอยู่นานขนาดนี้",
+    "ฉันเคยคิดว่าถ้าไม่มีใครพูดถึงเรื่องนี้ มันก็คงไม่เจ็บอีก",
+    "แต่ความเงียบไม่ได้ทำให้ใครกลับมา",
+    "",
+    "ถ้าอยากรู้ว่าเกิดอะไรขึ้น โปรดอ่านบันทึกทั้งสามฉบับ"
+  ];
+  const notes = [
+    "บันทึก 01 — กระดาษเปียกฝน\n\n“วันนั้นฝนตกหนักจนหมึกเกือบหายไปหมด ฉันเขียนวันที่ไว้ตรงมุมกระดาษ: 1 7\n\nอย่ามองหาคนผิดเลย ฉันแค่อยากให้ใครสักคนจำได้ว่าเราเคยอยู่ตรงนี้”",
+    "บันทึก 02 — เทปที่ไม่มีเสียง\n\n“เครื่องเล่นเสียตั้งแต่เวลา 2 นาฬิกา 4 นาที ฉันยังเก็บเทปไว้ เพราะเสียงหัวเราะในความทรงจำของฉันชัดกว่าเสียงจากเครื่องเสียอีก\n\nตัวเลขที่เหลืออยู่คือ 0 4”",
+    "บันทึก 03 — ภาพถ่ายที่หันกลับ\n\n“ด้านหลังภาพมีตัวเลขที่ถูกวงไว้: 0\n\nฉันจำไม่ได้แล้วว่าใครเป็นคนถ่ายภาพนี้ แต่ฉันจำได้ว่าตอนนั้นเราไม่ได้รู้เลยว่าวันธรรมดาวันหนึ่งจะกลายเป็นความทรงจำสุดท้าย”"
+  ];
+  const secretCode = "1704";
+  let typed = false;
+  let noteCount = 0;
+  let lastLineShown = false;
+
+  const opening = document.getElementById("opening");
+  const readBtn = document.getElementById("readBtn");
+  const noteText = document.getElementById("noteText");
+  const codeInput = document.getElementById("codeInput");
+  const codeResult = document.getElementById("codeResult");
+  const ending = document.getElementById("ending");
+  const endingText = document.getElementById("endingText");
+  const finalText = document.getElementById("finalText");
+
+  function showOpening() {
+    if (typed) {
+      opening.textContent = openingLines.join("\n");
+      readBtn.textContent = "อ่านข้อความแล้ว";
+      readBtn.disabled = true;
+      return;
+    }
+    typed = true;
+    readBtn.disabled = true;
+    let lineIndex = 0;
+    let charIndex = 0;
+    let output = "";
+    function typeNext() {
+      if (lineIndex >= openingLines.length) {
+        readBtn.textContent = "อ่านข้อความแล้ว";
+        return;
+      }
+      const line = openingLines[lineIndex];
+      if (charIndex < line.length) {
+        output += line[charIndex++];
+        opening.textContent = output;
+        window.setTimeout(typeNext, 24);
+      } else {
+        output += "\n";
+        lineIndex++;
+        charIndex = 0;
+        opening.textContent = output;
+        window.setTimeout(typeNext, 130);
+      }
+    }
+    typeNext();
+  }
+  readBtn.addEventListener("click", showOpening);
+  window.setTimeout(showOpening, 350);
+
+  document.querySelectorAll("[data-note]").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.note);
+      if (!button.classList.contains("unlocked")) {
+        button.classList.add("unlocked");
+        button.setAttribute("aria-pressed", "true");
+        noteCount++;
+      }
+      noteText.textContent = notes[index];
+      if (noteCount === notes.length) {
+        codeResult.textContent = "บันทึกครบแล้ว ลองรวมตัวเลขจากเอกสารทั้งสามฉบับ";
+      }
+    });
+  });
+
+  document.getElementById("unlockBtn").addEventListener("click", () => {
+    const code = codeInput.value.trim();
+    if (code === secretCode) {
+      ending.classList.remove("hidden");
+      endingText.textContent =
+        "แฟ้ม 00 — ไม่มีชื่อผู้รับ\n\n“ฉันเคยคิดว่าความทรงจำคือการเก็บใครบางคนไว้ แต่บางที มันอาจเป็นการยอมรับว่าพวกเขาไม่อาจกลับมาได้\n\nฉันไม่ได้รอให้ใครแก้ไขอดีต ฉันแค่อยากให้มีใครสักคนเปิดจดหมายฉบับนี้ แล้วรู้ว่าฉันเคยมีความหมายกับโลกใบเล็ก ๆ ใบหนึ่ง”";
+      codeResult.textContent = "ปลดล็อกสำเร็จ: พบแฟ้ม 00";
+      document.getElementById("systemStatus").textContent = "● พบเอกสารที่ถูกซ่อน";
+      ending.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      codeResult.textContent = noteCount < 3
+        ? "รหัสไม่ถูกต้อง ยังมีบันทึกที่ไม่ได้อ่าน"
+        : "รหัสไม่ถูกต้อง ลองทบทวนตัวเลขในบันทึกอีกครั้ง";
+    }
+  });
+
+  codeInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") document.getElementById("unlockBtn").click();
+  });
+
+  document.getElementById("finalBtn").addEventListener("click", () => {
+    if (lastLineShown) return;
+    lastLineShown = true;
+    finalText.classList.remove("hidden");
+    finalText.textContent = "“ขอบคุณที่อ่านจนถึงตรงนี้\n\nตอนนี้ฉันไม่ต้องรออยู่ในห้องที่ไม่มีใครเปิดอีกแล้ว”";
+    document.getElementById("finalBtn").disabled = true;
+  });
+
+  const lightsBtn = document.getElementById("lightsBtn");
+  lightsBtn.addEventListener("click", () => {
+    const enabled = document.body.classList.toggle("glitch");
+    lightsBtn.setAttribute("aria-pressed", String(enabled));
+    lightsBtn.textContent = enabled ? "ปิดสัญญาณภาพ" : "สลับสัญญาณภาพ";
+    <div style="width: 100%; text-align: center; padding: 20px 0; background-color: #080b09; border-top: 1px solid #78d6a0;">
+        
+    <a href="3. scary.html" style="text-decoration: none;">
+        <button style="background: #163524; color: #78d6a0; border: 2px solid #4c9d6a; padding: 14px 28px; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 6px;">
+            NEXT ➔ ไปยัง 3. scary.html
+            
+            <!-- เมนูข้ามฉากแบบไม่ใช้ JavaScript (Pure HTML) -->
+<div style="background: #111; padding: 15px; border: 1px solid #ff0000; font-family: sans-serif; text-align: center; margin: 20px 0;">
+    <h3 style="color: #ff0000; margin-top: 0;">🔻 ระบบข้ามฉาก / Skip Navigation 🔻</h3>
+    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <a href="index.html.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">หน้าหลัก (Index)</a>
+        <a href="1. The Void Containment System.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 1: The Void</a>
+        <a href="2. room_zero_tragic_horror.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 2: Room Zero</a>
+        <a href="3. scary.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 3: Scary</a>
+        <a href="4. end ing.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 4: Ending</a>
+        <a href="CCTV index.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">กล้อง CCTV</a>
+    </div>
+</div>
+
+            
+        </button>
+    </a>
+</div>
+
+  });
+})();
+</script>
+</body>
+</html>
