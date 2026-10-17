@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<div>
+    <a>
+        <button>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITE-066 // VOID CONTAINMENT TERMINAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=VT323&family=Share+Tech+Mono&family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --term-red: #ff1100;
+            --term-green: #33ff33;
+            --term-amber: #ffb700;
+        }
+
+        body {
+            background-color: #020202;
+            color: #d1d5db;
+            font-family: 'VT323', 'Sarabun', monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* CRT Effects */
+        .crt::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            z-index: 40;
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Scanline Flicker */
+        .scanline {
+            width: 100%;
+            height: 120px;
+            z-index: 41;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.15;
+            position: absolute;
+            bottom: 100%;
+            pointer-events: none;
+            animation: scanline 7s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -120px; }
+        }
+
+        /* Glitches */
+        .glitch-text {
+            position: relative;
+            text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75);
+            animation: glitch-anim 2s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { text-shadow: -2px 0 #ff0000, 2px 0 #00ffff; }
+            20% { text-shadow: 2px -1px #ff0000, -2px 1px #0000ff; }
+            40% { text-shadow: -1px 2px #00ff00, 1px -2px #ff0000; }
+            60% { text-shadow: 3px 0 #ff0000, -1px 0 #00ffff; }
+            80% { text-shadow: -2px 0 #00ff00, 2px 0 #ff00ff; }
+            100% { text-shadow: 1px -1px #ff0000, -1px 1px #00ffff; }
+        }
+
+        .severe-shake {
+            animation: shake 0.15s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            25% { transform: translate(-3px, -1px) rotate(-1deg); }
+            50% { transform: translate(-1px, 3px) rotate(1deg); }
+            75% { transform: translate(3px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .creepy-font {
+            font-family: 'Creepster', cursive;
+        }
+
+        .mono-font {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020202;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #880000;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen relative crt bg-black flex flex-col justify-between p-2 md:p-4 text-gray-300">
+
+    <!-- Screen Glitch Noise Canvas Overlay -->
+    <canvas id="noiseCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-10 opacity-30"></canvas>
+    <div class="scanline"></div>
+
+    <!-- Jumpscare / System Override Modal -->
+    <div id="jumpscareOverlay" class="fixed inset-0 bg-red-950/95 z-50 flex flex-col items-center justify-center hidden pointer-events-none p-4">
+        <pre id="asciiDemon" class="text-red-600 text-[8px] sm:text-[11px] leading-none font-bold mono-font select-none mb-4 animate-pulse"></pre>
+        <h1 class="text-6xl sm:text-8xl text-red-600 creepy-font text-center animate-bounce">CONTAINMENT BREACHED</h1>
+        <p id="jumpscareText" class="text-white text-xl sm:text-2xl mt-4 glitch-text font-mono text-center">IT IS INSIDE YOUR COMPUTER</p>
+    </div>
+
+    <!-- Entry / Audio Enable Overlay -->
+    <div id="startScreen" class="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-6 text-center border-4 border-red-950">
+        <div class="max-w-2xl space-y-6">
+            <div class="text-red-600 text-xs tracking-widest border-b border-red-900 pb-1 font-mono">CLASSIFIED // EYES ONLY // SITE-066</div>
+            <h1 class="text-4xl sm:text-7xl text-red-700 tracking-widest font-bold glitch-text">PROJECT: NIGHTMARE</h1>
+            <p class="text-gray-400 text-base sm:text-lg leading-relaxed font-sans">
+                You are operating Containment Terminal 0x06. The subject inside entity chamber #4 interacts directly through neural frequency feedback. 
+                <br><br>
+                <span class="text-red-500 text-sm font-mono block">WARNING: Put on headphones. Dark environment required. Do not panic if you hear voices behind you.</span>
+            </p>
+            <div class="flex justify-center gap-4">
+                <button id="startButton" class="px-8 py-4 bg-red-950/60 border border-red-700 text-red-400 text-xl sm:text-2xl hover:bg-red-900 hover:text-white transition duration-300 shadow-[0_0_20px_rgba(255,0,0,0.4)]">
+                    [ INITIALIZE NEURAL FEED ]
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Stats -->
+    <header class="relative z-20 flex flex-wrap justify-between items-center border-b border-red-900/60 pb-2 px-2 gap-2">
+        <div class="flex items-center space-x-3">
+            <div class="w-3 h-3 bg-red-600 rounded-full animate-ping"></div>
+            <span class="text-red-600 tracking-widest text-sm sm:text-lg font-bold mono-font">SITE-066 // ENTITY_MONITOR</span>
+        </div>
+
+        <!-- Sanity & Paranoia Gauges -->
+        <div class="flex items-center space-x-4 text-xs sm:text-sm">
+            <div>
+                <span class="text-gray-500 block text-[10px]">SANITY LEVEL:</span>
+                <div class="w-24 sm:w-36 bg-gray-950 border border-red-900 h-3 rounded overflow-hidden">
+                    <div id="sanityBar" class="bg-red-700 h-full w-full transition-all duration-300"></div>
+                </div>
+            </div>
+            <div>
+                <span class="text-gray-500 block text-[10px]">PARANOIA LEVEL:</span>
+                <div class="w-24 sm:w-36 bg-gray-950 border border-amber-900 h-3 rounded overflow-hidden">
+                    <div id="paranoiaBar" class="bg-amber-600 h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Section Grid -->
+    <main class="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-4 my-2 h-[76vh]">
+        
+        <!-- CCTV Camera Feeds Panel (Left) -->
+        <div class="lg:col-span-5 bg-black/80 border border-red-900/50 rounded p-3 flex flex-col justify-between backdrop-blur">
+            <div class="flex justify-between items-center border-b border-red-950 pb-2">
+                <span id="cctvTitle" class="text-red-500 text-sm sm:text-base font-bold mono-font">CAM_01: "THE EYE"</span>
+                <span class="text-xs text-red-800 animate-pulse font-mono">REC ● LIVE</span>
+            </div>
+
+            <!-- CCTV Canvas Viewport -->
+            <div class="relative w-full h-56 sm:h-64 my-2 bg-black border border-red-950 rounded overflow-hidden flex items-center justify-center">
+                <canvas id="cctvCanvas" class="w-full h-full"></canvas>
+                <div class="absolute top-2 left-2 text-[10px] text-green-500 font-mono bg-black/60 px-1 border border-green-900/50">
+                    SIGNAL: STABLE
+                </div>
+            </div>
+
+            <!-- CCTV Channel Selector Buttons -->
+            <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                <button class="cam-btn px-2 py-1 bg-red-950/40 border border-red-800 text-red-400 hover:bg-red-900/80 transition" data-cam="1">CAM 1: THE EYE</button>
+                <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500 hover:bg-red-950/40 transition" data-cam="2">CAM 2: DARK ROOM</button>
+                <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500 hover:bg-red-950/40 transition" data-cam="3">CAM 3: CORRIDOR</button>
+                <button class="cam-btn px-2 py-1 bg-black border border-red-950 text-gray-500 hover:bg-red-950/40 transition" data-cam="4">CAM 4: NOISE ENTITY</button>
+            </div>
+        </div>
+
+        <!-- Interactive Terminal Panel (Right) -->
+        <div class="lg:col-span-7 bg-black/90 border border-red-900/70 rounded p-4 flex flex-col justify-between shadow-[0_0_25px_rgba(40,0,0,0.5)] backdrop-blur">
+            
+            <!-- Dialogue Stream Output -->
+            <div id="terminalOutput" class="overflow-y-auto space-y-3 font-mono text-sm sm:text-base pr-2 h-[45vh] lg:h-[50vh]">
+                <p class="text-green-500">[SYSTEM]: Containment node synchronized. Biological tracker initialized.</p>
+            </div>
+
+            <!-- Choice Interaction Console -->
+            <div class="border-t border-red-950 pt-3">
+                <div id="choiceBox" class="grid grid-cols-1 sm:grid-cols-2 gap-2 hidden">
+                    <button class="choice-btn px-3 py-2 bg-red-950/30 border border-red-800/60 hover:bg-red-900/60 text-red-300 text-left text-xs sm:text-sm rounded transition" data-choice="0"></button>
+                    <button class="choice-btn px-3 py-2 bg-red-950/30 border border-red-800/60 hover:bg-red-900/60 text-red-300 text-left text-xs sm:text-sm rounded transition" data-choice="1"></button>
+                    <button class="choice-btn px-3 py-2 bg-red-950/30 border border-red-800/60 hover:bg-red-900/60 text-red-300 text-left text-xs sm:text-sm rounded transition" data-choice="2"></button>
+                    <button class="choice-btn px-3 py-2 bg-red-950/30 border border-red-800/60 hover:bg-red-900/60 text-red-300 text-left text-xs sm:text-sm rounded transition" data-choice="3"></button>
+                </div>
+                <div id="terminalPrompt" class="text-red-700/70 text-xs text-center animate-pulse mt-2 font-mono">
+                    [ WAITING FOR ENTITY PROMPT... ]
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Status & Controls -->
+    <footer class="relative z-20 flex flex-wrap justify-between items-center border-t border-red-950 pt-2 px-2 text-xs text-gray-600 gap-2 font-mono">
+        <div id="locationTag">HOST ID: LOCALHOST // AUDIT: UNKNOWN ENTITY</div>
+        <div class="flex space-x-3">
+            <button id="toggleFullscreen" class="hover:text-red-500 transition">[ FULLSCREEN ]</button>
+            <button id="toggleAudio" class="hover:text-red-500 transition">[ MUTE AUDIO ]</button>
+            <button id="triggerGlitch" class="hover:text-red-500 transition">[ DISTORT ]</button>
+        </div>
+    </footer>
+
+    <!-- Logic Engine -->
+    <script>
+        /* ==========================================================================
+           1. ADVANCED WEB AUDIO ENGINE (Shepard Tone, Whispers, Heartbeats, Clicks)
+           ========================================================================== */
+        class AdvancedHorrorAudio {
+            constructor() {
+                this.ctx = null;
+                this.isMuted = false;
+                this.shepardOscs = [];
+                this.whisperBuffer = null;
+                this.whisperNode = null;
+                this.heartbeatTimer = null;
+                this.heartRate = 1200; // ms
+            }
+
+            init() {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+                this.startShepardTone();
+                this.startWhisperNoise();
+                this.startHeartbeatLoop();
+            }
+
+            // Continuous Shepard Tone (Rising Frequency Illusion)
+            startShepardTone() {
+                if (!this.ctx) return;
+                const numLFOs = 4;
+                for (let i = 0; i < numLFOs; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sawtooth';
+                    const baseFreq = 55 * Math.pow(2, i);
+                    osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+
+                    // Continuous pitch glide
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, this.ctx.currentTime + 12);
+
+                    gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+
+                    this.shepardOscs.push({ osc, gain });
+                }
+
+                // Loop reset frequencies
+                setInterval(() => {
+                    if (this.isMuted || !this.ctx) return;
+                    this.shepardOscs.forEach((item, index) => {
+                        const baseFreq = 55 * Math.pow(2, index);
+                        item.osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+                        item.osc.frequency.exponentialRampToValueAtTime(baseFreq * 2, this.ctx.currentTime + 12);
+                    });
+                }, 12000);
+            }
+
+            // Hushed Digital Whispering Noise
+            startWhisperNoise() {
+                if (!this.ctx) return;
+                const bufferSize = this.ctx.sampleRate * 2;
+                this.whisperBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = this.whisperBuffer.getChannelData(0);
+
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * 0.08;
+                }
+
+                this.whisperNode = this.ctx.createBufferSource();
+                this.whisperNode.buffer = this.whisperBuffer;
+                this.whisperNode.loop = true;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(1200, this.ctx.currentTime);
+                filter.Q.setValueAtTime(3.0, this.ctx.currentTime);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+
+                this.whisperNode.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                this.whisperNode.start();
+            }
+
+            // Heartbeat Generator (Dynamic Speed)
+            startHeartbeatLoop() {
+                const playBeat = () => {
+                    if (!this.isMuted && this.ctx) {
+                        this.playHeartPulse(55, 0.2, 0.08);
+                        setTimeout(() => {
+                            this.playHeartPulse(45, 0.15, 0.06);
+                        }, 220);
+                    }
+                    this.heartbeatTimer = setTimeout(playBeat, this.heartRate);
+                };
+                playBeat();
+            }
+
+            setHeartRate(ms) {
+                this.heartRate = Math.max(350, ms);
+            }
+
+            playHeartPulse(freq, gainVal, duration) {
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + duration);
+
+                    gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            // Spatial Sudden Thump / Static Glitch Burst
+            playBurstSound() {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(Math.random() * 800 + 100, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(40, this.ctx.currentTime + 0.3);
+
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.3);
+            }
+
+            // Screamer Burst Audio
+            playScreamerAudio() {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(2800, this.ctx.currentTime + 1.2);
+
+                gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.2);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 1.2);
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                return this.isMuted;
+            }
+        }
+
+        const audio = new AdvancedHorrorAudio();
+
+        /* ==========================================================================
+           2. MULTI-CHANNEL CCTV CANVAS ENGINE
+           ========================================================================== */
+        const cctvCanvas = document.getElementById('cctvCanvas');
+        const cctvCtx = cctvCanvas.getContext('2d');
+        let currentCam = 1;
+
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            increaseParanoia(0.15); // Mouse movement increases paranoia slightly
+        });
+
+        function resizeCCTV() {
+            cctvCanvas.width = cctvCanvas.clientWidth;
+            cctvCanvas.height = cctvCanvas.clientHeight;
+        }
+        window.addEventListener('resize', resizeCCTV);
+        resizeCCTV();
+
+        // CAM 3 Corridor offset variables
+        let corridorOffset = 0;
+
+        function renderCCTV() {
+            const w = cctvCanvas.width;
+            const h = cctvCanvas.height;
+            cctvCtx.fillStyle = '#000';
+            cctvCtx.fillRect(0, 0, w, h);
+
+            if (currentCam === 1) {
+                // CAM 1: THE EYE
+                const centerX = w / 2;
+                const centerY = h / 2;
+                const radius = Math.min(centerX, centerY) - 25;
+
+                // Outer Sclera
+                cctvCtx.beginPath();
+                cctvCtx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                cctvCtx.fillStyle = '#080202';
+                cctvCtx.fill();
+                cctvCtx.strokeStyle = '#550000';
+                cctvCtx.stroke();
+
+                // Dynamic Bloodshot Veins (Increases with paranoia)
+                const veinCount = Math.floor(paranoia / 10) + 4;
+                cctvCtx.strokeStyle = 'rgba(200, 0, 0, 0.6)';
+                for (let i = 0; i < veinCount; i++) {
+                    cctvCtx.beginPath();
+                    cctvCtx.moveTo(centerX, centerY);
+                    const angle = (Math.PI * 2 / veinCount) * i;
+                    cctvCtx.lineTo(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius);
+                    cctvCtx.stroke();
+                }
+
+                // Pupil Tracking
+                const angle = Math.atan2(mouseY - window.innerHeight / 2, mouseX - window.innerWidth / 2);
+                const dist = Math.min(20, Math.hypot(mouseX - window.innerWidth / 2, mouseY - window.innerHeight / 2) / 25);
+                const pupilX = centerX + Math.cos(angle) * dist;
+                const pupilY = centerY + Math.sin(angle) * dist;
+
+                // Iris
+                cctvCtx.beginPath();
+                cctvCtx.arc(pupilX, pupilY, radius * 0.45, 0, Math.PI * 2);
+                cctvCtx.fillStyle = '#990000';
+                cctvCtx.fill();
+
+                // Pupil (Dilates when close)
+                const dilation = Math.max(0.1, 0.3 - (dist / 100));
+                cctvCtx.beginPath();
+                cctvCtx.arc(pupilX, pupilY, radius * dilation, 0, Math.PI * 2);
+                cctvCtx.fillStyle = '#000';
+                cctvCtx.fill();
+
+            } else if (currentCam === 2) {
+                // CAM 2: DARK ROOM (Cursor Spotlight reveal)
+                cctvCtx.fillStyle = '#030303';
+                cctvCtx.fillRect(0, 0, w, h);
+
+                const rect = cctvCanvas.getBoundingClientRect();
+                const relX = mouseX - rect.left;
+                const relY = mouseY - rect.top;
+
+                // Spotlight Gradient
+                const grad = cctvCtx.createRadialGradient(relX, relY, 10, relX, relY, 80);
+                grad.addColorStop(0, 'rgba(255,255,255,0.15)');
+                grad.addColorStop(1, 'rgba(0,0,0,0.95)');
+                cctvCtx.fillStyle = grad;
+                cctvCtx.fillRect(0, 0, w, h);
+
+                // Hidden Silhouette Figure in dark
+                cctvCtx.fillStyle = '#0a0a0a';
+                cctvCtx.beginPath();
+                cctvCtx.arc(w * 0.7, h * 0.4, 25, 0, Math.PI * 2); // Head
+                cctvCtx.rect(w * 0.7 - 20, h * 0.4 + 25, 40, 70); // Body
+                cctvCtx.fill();
+
+            } else if (currentCam === 3) {
+                // CAM 3: CORRIDOR DISTORTION
+                corridorOffset += 0.02;
+                cctvCtx.strokeStyle = '#330000';
+                cctvCtx.lineWidth = 2;
+
+                // Vanishing Point Tunnel
+                const vpX = w / 2;
+                const vpY = h / 2;
+                
+                cctvCtx.beginPath();
+                cctvCtx.moveTo(0, 0); cctvCtx.lineTo(vpX, vpY);
+                cctvCtx.moveTo(w, 0); cctvCtx.lineTo(vpX, vpY);
+                cctvCtx.moveTo(0, h); cctvCtx.lineTo(vpX, vpY);
+                cctvCtx.moveTo(w, h); cctvCtx.lineTo(vpX, vpY);
+                cctvCtx.stroke();
+
+                // Approaching Shadow Silhouette
+                const shadowSize = (Math.sin(corridorOffset) + 1) * 20 + 10;
+                cctvCtx.fillStyle = 'rgba(15, 0, 0, 0.9)';
+                cctvCtx.fillRect(vpX - shadowSize / 2, vpY - shadowSize, shadowSize, shadowSize * 2);
+
+            } else if (currentCam === 4) {
+                // CAM 4: STATIC NOISE ENTITY
+                const imgData = cctvCtx.createImageData(w, h);
+                const buffer = new Uint32Array(imgData.data.buffer);
+
+                for (let i = 0; i < buffer.length; i++) {
+                    if (Math.random() < 0.1) {
+                        buffer[i] = (255 << 24) | (0 << 16) | (0 << 8) | Math.floor(Math.random() * 150);
+                    }
+                }
+                cctvCtx.putImageData(imgData, 0, 0);
+
+                // Face artifact morph during static glitch
+                if (Math.random() < 0.15) {
+                    cctvCtx.fillStyle = 'rgba(150, 0, 0, 0.4)';
+                    cctvCtx.font = '30px monospace';
+                    cctvCtx.fillText("LOOK BEHIND YOU", w / 6, h / 2);
+                }
+            }
+
+            requestAnimationFrame(renderCCTV);
+        }
+        renderCCTV();
+
+        // Switch CCTV Channels
+        document.querySelectorAll('.cam-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cam-btn').forEach(b => {
+                    b.classList.remove('bg-red-950/40', 'text-red-400');
+                    b.classList.add('bg-black', 'text-gray-500');
+                });
+                e.target.classList.remove('bg-black', 'text-gray-500');
+                e.target.classList.add('bg-red-950/40', 'text-red-400');
+
+                currentCam = parseInt(e.target.dataset.cam);
+                document.getElementById('cctvTitle').textContent = `CAM_0${currentCam}: ${e.target.textContent}`;
+                audio.playBurstSound();
+                increaseParanoia(10);
+            });
+        });
+
+        /* ==========================================================================
+           3. BACKGROUND STATIC CANVAS
+           ========================================================================== */
+        const noiseCanvas = document.getElementById('noiseCanvas');
+        const noiseCtx = noiseCanvas.getContext('2d');
+
+        function resizeNoise() {
+            noiseCanvas.width = window.innerWidth;
+            noiseCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeNoise);
+        resizeNoise();
+
+        function drawNoise() {
+            const w = noiseCanvas.width;
+            const h = noiseCanvas.height;
+            const imgData = noiseCtx.createImageData(w, h);
+            const buffer = new Uint32Array(imgData.data.buffer);
+
+            for (let i = 0; i < buffer.length; i++) {
+                if (Math.random() < 0.03) {
+                    buffer[i] = (255 << 24) | (0 << 16) | (0 << 8) | Math.floor(Math.random() * 60);
+                }
+            }
+            noiseCtx.putImageData(imgData, 0, 0);
+            requestAnimationFrame(drawNoise);
+        }
+        drawNoise();
+
+        /* ==========================================================================
+           4. PSYCHOLOGICAL MECHANICS & NARRATIVE TERMINAL
+           ========================================================================== */
+        const terminalOutput = document.getElementById('terminalOutput');
+        const choiceBox = document.getElementById('choiceBox');
+        const terminalPrompt = document.getElementById('terminalPrompt');
+        const sanityBar = document.getElementById('sanityBar');
+        const paranoiaBar = document.getElementById('paranoiaBar');
+
+        let sanity = 100;
+        let paranoia = 0;
+        let storyStep = 0;
+
+        const storyTree = [
+            {
+                text: "CRITICAL: Containment Chamber #4 temperature dropping rapidly. Entity is making direct eye contact with your terminal camera.",
+                choices: [
+                    "Respond: 'I see you.'",
+                    "Avert your eyes from the screen.",
+                    "Check Chamber #4 lock mechanism.",
+                    "Attempt emergency shutdown."
+                ]
+            },
+            {
+                text: "The terminal speakers crackle with hushed static: 'Why do you pretend to be safe behind that glass screen?'",
+                choices: [
+                    "Type: 'The screen protects me.'",
+                    "Type: 'Who created you?'",
+                    "Remain dead silent.",
+                    "Unplug terminal audio."
+                ]
+            },
+            {
+                text: "System Alert: Heart rate tracker indicates your chest is beating irregularly. The shadow entity is matching your exact rhythm.",
+                choices: [
+                    "Hold your breath for 10 seconds.",
+                    "Look at the dark corner of your room.",
+                    "Type: 'Leave my head.'",
+                    "Accept the connection."
+                ]
+            }
+        ];
+
+        function typeText(text, delay = 30) {
+            return new Promise((resolve) => {
+                const p = document.createElement('p');
+                p.className = 'text-gray-300 border-l-2 border-red-800 pl-2 my-1 font-mono';
+                terminalOutput.appendChild(p);
+
+                let idx = 0;
+                audio.playBurstSound();
+
+                const timer = setInterval(() => {
+                    if (idx < text.length) {
+                        p.textContent += text.charAt(idx);
+                        idx++;
+                        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                    } else {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, delay);
+            });
+        }
+
+        async function processStoryStep(step) {
+            choiceBox.classList.add('hidden');
+            terminalPrompt.textContent = '[ ENTITY PROCESSING YOUR MIND... ]';
+
+            if (step < storyTree.length) {
+                await typeText(storyTree[step].text);
+                showChoices(storyTree[step].choices);
+            } else {
+                await typeText("THE SYSTEM HAS BECOME A MIRROR. IT IS STANDING DIRECTLY BEHIND YOUR CHAIR.");
+                triggerJumpscare();
+            }
+        }
+
+        function showChoices(choices) {
+            const buttons = choiceBox.querySelectorAll('.choice-btn');
+            choices.forEach((choiceText, i) => {
+                if (buttons[i]) {
+                    buttons[i].textContent = `${i + 1}. ${choiceText}`;
+                    buttons[i].classList.remove('hidden');
+                }
+            });
+            choiceBox.classList.remove('hidden');
+            terminalPrompt.textContent = '[ CHOOSE YOUR DESTRUCTION ]';
+        }
+
+        function lowerSanity(val) {
+            sanity = Math.max(0, sanity - val);
+            sanityBar.style.width = `${sanity}%`;
+
+            // Speed up heart rate as sanity lowers
+            audio.setHeartRate(1200 * (sanity / 100));
+
+            if (sanity < 30) {
+                document.body.classList.add('severe-shake');
+            }
+
+            if (sanity <= 0) {
+                triggerJumpscare();
+            }
+        }
+
+        function increaseParanoia(val) {
+            paranoia = Math.min(100, paranoia + val);
+            paranoiaBar.style.width = `${paranoia}%`;
+        }
+
+        // ASCII Demon Art for Jumpscare
+        const asciiDemonArt = `
+          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+          ░░░░░░░░░████████████████░░░░░░░░░
+          ░░░░░░██████████████████████░░░░░░
+          ░░░░██████████████████████████░░░░
+          ░░██████████████████████████████░░
+          ░░██████  ████████████  ██████░░
+          ░░██████  ████████████  ██████░░
+          ░░████████████████████████████░░
+          ░░████████████████████████████░░
+          ░░░░██████  ██  ██  ██  ████░░░░
+          ░░░░░░████████████████████░░░░░░
+          ░░░░░░░░░██████████████░░░░░░░░░
+        `;
+
+        function triggerJumpscare() {
+            const overlay = document.getElementById('jumpscareOverlay');
+            document.getElementById('asciiDemon').textContent = asciiDemonArt;
+            overlay.classList.remove('hidden');
+            audio.playScreamerAudio();
+
+            setTimeout(() => {
+                overlay.innerHTML = `
+                    <h1 class="text-5xl sm:text-7xl text-red-600 creepy-font mb-4">SUBJECT ASSIMILATED</h1>
+                    <p class="text-gray-400 font-mono text-center">Terminal session terminated by Entity #06.</p>
+                    <button onclick="location.reload()" class="mt-6 px-6 py-3 border border-red-800 text-red-500 hover:bg-red-950 font-mono">
+                        [ RE-INITIALIZE NEURAL LINK ]
+                    </button>
+                `;
+            }, 2500);
+        }
+
+        /* ==========================================================================
+           5. EVENT BINDINGS
+           ========================================================================== */
+        document.getElementById('startButton').addEventListener('click', async () => {
+            document.getElementById('startScreen').classList.add('hidden');
+            audio.init();
+            await typeText("NEURAL FEED ESTABLISHED. DO NOT CLOSE YOUR EYES.");
+            processStoryStep(0);
+        });
+
+        choiceBox.addEventListener('click', (e) => {
+            if (e.target.classList.contains('choice-btn')) {
+                audio.playBurstSound();
+                lowerSanity(Math.floor(Math.random() * 20) + 15);
+                increaseParanoia(15);
+                storyStep++;
+                processStoryStep(storyStep);
+            }
+        });
+
+        // Controls
+        document.getElementById('toggleAudio').addEventListener('click', (e) => {
+            const muted = audio.toggleMute();
+            e.target.textContent = muted ? '[ UNMUTE AUDIO ]' : '[ MUTE AUDIO ]';
+        });
+
+        document.getElementById('toggleFullscreen').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        });
+
+        document.getElementById('triggerGlitch').addEventListener('click', () => {
+            audio.playBurstSound();
+            document.body.classList.add('severe-shake');
+            lowerSanity(10);
+            setTimeout(() => {
+                document.body.classList.remove('severe-shake');
+            }, 600);
+        });
+
+        // Passive Paranoia Degradation Loop
+        setInterval(() => {
+            increaseParanoia(1);
+            if (Math.random() < 0.2) {
+                audio.playBurstSound();
+            }
+        }, 4000);
+        
+        <div style="width: 100%; text-align: center; padding: 20px 0; background-color: #000; border-top: 1px solid #ff0000;">
+    <a href="2. room_zero_tragic_horror.html" style="text-decoration: none;">
+        <button style="background: #440000; color: #ffffff; border: 2px solid #ff0000; padding: 14px 28px; font-size: 18px; font-weight: bold; cursor: pointer; border-radius: 6px;">
+            NEXT ➔ ไปยัง 2. room_zero_tragic_horror.html
+            
+            <!-- เมนูข้ามฉากแบบไม่ใช้ JavaScript (Pure HTML) -->
+<div style="background: #111; padding: 15px; border: 1px solid #ff0000; font-family: sans-serif; text-align: center; margin: 20px 0;">
+    <h3 style="color: #ff0000; margin-top: 0;">🔻 ระบบข้ามฉาก / Skip Navigation 🔻</h3>
+    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <a href="index.html.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">หน้าหลัก (Index)</a>
+        <a href="1. The Void Containment System.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 1: The Void</a>
+        <a href="2. room_zero_tragic_horror.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 2: Room Zero</a>
+        <a href="3. scary.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 3: Scary</a>
+        <a href="4. end ing.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">ฉาก 4: Ending</a>
+        <a href="CCTV index.html" style="color: #fff; background: #333; padding: 8px 12px; text-decoration: none; border-radius: 4px;">กล้อง CCTV</a>
+    </div>
+</div>
+
+            
+        </button>
+    </a>
+</div>
+
+    </script>
+</body>
+</html>
